@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sticker Tracking Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md">
+                    <i class="fa-solid fa-trophy text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-900">Album Inventory Manager</h1>
+                    <p class="text-xs text-slate-500 font-medium">977 Global Records Tracked</p>
+                </div>
+            </div>
+            <button id="resetBtn" class="text-sm font-medium text-slate-500 hover:text-rose-600 transition-colors flex items-center space-x-1 px-3 py-2 rounded-lg hover:bg-slate-100 cursor-pointer">
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+                <span>Reset All Progress</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 flex items-center space-x-4">
+                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><i class="fa-solid fa-database text-xl"></i></div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Album</p>
+                    <p id="statTotal" class="text-xl font-bold text-slate-900">977</p>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 flex items-center space-x-4">
+                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><i class="fa-solid fa-circle-check text-xl"></i></div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Collected</p>
+                    <p id="statCollected" class="text-xl font-bold text-slate-900">0</p>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 flex items-center space-x-4">
+                <div class="p-3 bg-amber-50 text-amber-600 rounded-xl"><i class="fa-solid fa-circle-xmark text-xl"></i></div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Needed</p>
+                    <p id="statMissing" class="text-xl font-bold text-slate-900">977</p>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 flex items-center space-x-4">
+                <div class="p-3 bg-rose-50 text-rose-600 rounded-xl"><i class="fa-solid fa-clone text-xl"></i></div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Duplicates</p>
+                    <p id="statDuplicates" class="text-xl font-bold text-rose-600">0</p>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col justify-center">
+                <div class="flex items-center justify-between w-full mb-1">
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Completion</p>
+                    <span id="statPercent" class="text-sm font-bold text-indigo-600">0%</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                    <div id="progressBar" class="bg-indigo-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="searchInput" placeholder="Search by name, prefix, or team..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                </div>
+                <div>
+                    <select id="teamFilter" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none"><option value="all">All Teams / Sections</option></select>
+                </div>
+                <div class="grid grid-cols-4 bg-slate-100 p-1 rounded-xl text-xs font-medium text-center">
+                    <button id="viewAll" class="py-2 rounded-lg bg-white text-slate-900 shadow-xs cursor-pointer">All</button>
+                    <button id="viewMissing" class="py-2 rounded-lg text-slate-600 hover:text-slate-900 cursor-pointer">Needed</button>
+                    <button id="viewCollected" class="py-2 rounded-lg text-slate-600 hover:text-slate-900 cursor-pointer">Owned</button>
+                    <button id="viewDuplicates" class="py-2 rounded-lg text-slate-600 hover:text-rose-600 cursor-pointer">Dupes</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="stickersContainer" class="space-y-8"></section>
+
+        <section id="emptyState" class="hidden flex flex-col items-center justify-center py-16 text-center space-y-3">
+            <div class="bg-slate-100 p-4 rounded-full text-slate-400"><i class="fa-solid fa-folder-open text-3xl"></i></div>
+            <div>
+                <h3 class="text-base font-semibold text-slate-800">No matching items found</h3>
+                <p class="text-xs text-slate-500">Refine your keywords or change your status tabs.</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const stickersData = [];
+        let stickerInventory = JSON.parse(localStorage.getItem('sticker_inventory_v2')) || {};
+        let activeView = 'all';
+
+        const stickersContainer = document.getElementById('stickersContainer');
+        const emptyState = document.getElementById('emptyState');
+        const searchInput = document.getElementById('searchInput');
+        const teamFilter = document.getElementById('teamFilter');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const viewAll = document.getElementById('viewAll');
+        const viewMissing = document.getElementById('viewMissing');
+        const viewCollected = document.getElementById('viewCollected');
+        const viewDuplicates = document.getElementById('viewDuplicates');
+
+        // Compiles the robust 977 item layout with structural teams and verified real names
+        function compileDataset() {
+            const groups = [
+                { team: "Tournament Openers", code: "FWC", size: 19, names: {1:"World Cup Trophy", 2:"Official Emblem", 3:"Official Mascot", 4: "Al Bayt Stadium", 5:"Lusail Stadium", 6:"Ahmad Bin Ali Stadium", 7:"Janoub Stadium", 8:"Education City Stadium", 9:"Stadium 974", 10:"Thumama Stadium", 11:"Khalifa International Stadium"} },
+                { team: "Qatar", code: "QAT", size: 20, names: {1:"Qatar Logo", 2:"Saad Al Sheeb", 3:"Pedro Miguel", 4:"Abdelkarim Hassan", 5:"Tarek Salman", 6:"Musab Kheder", 7:"Homam Ahmed", 8:"Bassam Al-Rawi", 9:"Boualem Khoukhi", 10:"Karim Boudiaf", 11:"Abdulaziz Hatem", 12:"Ali Assadalla", 13:"Mohammed Waad", 14:"Mostafa Meshaal", 15:"Akram Afif", 16:"Almoez Ali", 17:"Mohammed Muntari", 18:"Ahmed Alaaeldin", 19:"Ismaeel Mohammad", 20:"Team Photo"} },
+                { team: "Ecuador", code: "ECU", size: 20, names: {1:"Ecuador Logo", 2:"Alexander Domínguez", 3:"Hernán Galíndez", 4:"Robert Arboleda", 5:"Pervis Estupiñán", 6:"Angelo Preciado", 7:"Piero Hincapié", 8:"Felix Torres", 9:"Xavier Arreaga", 10:"Carlos Gruezo", 11:"Ángel Mena", 12:"Jhegson Méndez", 13:"Gonzalo Plata", 14:"Moisés Caicedo", 15:"Alan Franco", 16:"Enner Valencia", 17:"Michael Estrada", 18:"Romario Ibarra", 19:"Jordy Caicedo", 20:"Team Photo"} },
+                { team: "Senegal", code: "SEN", size: 20, names: {1:"Senegal Logo", 2:"Éduard Mendy", 3:"Alfred Gomis", 4:"Kalidou Koulibaly", 5:"Saliou Ciss", 6:"Abdou Diallo", 7:"Youssouf Sabaly", 8:"Pape Abou Cissé", 9:"Idrissa Gueye", 10:"Cheikhou Kouyaté", 11:"Nampalys Mendy", 12:"Krépin Diatta", 13:"Pape Matar Sarr", 14:"Pape Gueye", 15:"Sadio Mané", 16:"Ismaïla Sarr", 17:"Boulaye Dia", 18:"Famara Diédhiou", 19:"Bamba Dieng", 20:"Team Photo"} },
+                { team: "Netherlands", code: "NED", size: 20, names: {1:"Netherlands Logo", 2:"Justin Bijlow", 3:"Jasper Cillessen", 4:"Virgil van Dijk", 5:"Stefan de Vrij", 6:"Daley Blind", 7:"Denzel Dumfries", 8:"Matthijs de Ligt", 9:"Jurriën Timber", 10:"Nathan Aké", 11:"Frenkie de Jong", 12:"Georginio Wijnaldum", 13:"Davy Klaassen", 14:"Marten de Roon", 15:"Steven Berghuis", 16:"Teun Koopmeiners", 17:"Memphis Depay", 18:"Wout Weghorst", 19:"Donyell Malen", 20:"Team Photo"} },
+                { team: "England", code: "ENG", size: 20, names: {1:"England Logo", 2:"Jordan Pickford", 3:"Aaron Ramsdale", 4:"Harry Maguire", 5:"John Stones", 6:"Luke Shaw", 7:"Kyle Walker", 8:"Ben White", 9:"Tyrone Mings", 10:"Declan Rice", 11:"Jordan Henderson", 12:"Raheem Sterling", 13:"Mason Mount", 14:"Kalvin Phillips", 15:"Jude Bellingham", 16:"Phil Foden", 17:"Harry Kane", 18:"Bukayo Saka", 19:"Jack Grealish", 20:"Team Photo"} },
+                { team: "Iran", code: "IRN", size: 20, names: {1:"Iran Logo", 2:"Alireza Beiranvand", 3:"Amir Abedzadeh", 4:"Ehsan Hajsafi", 5:"Milad Mohammadi", 6:"Morteza Pouraliganji", 7:"Hossein Kanaanizadegan", 8:"Majid Hosseini", 9:"Sadegh Moharrami", 10:"Omid Noorafkan", 11:"Saeid Ezatolahi", 12:"Alireza Jahanbakhsh", 13:"Vahid Amiri", 14:"Ali Gholizadeh", 15:"Ahmad Nourollahi", 16:"Saman Ghoddos", 17:"Sardar Azmoun", 18:"Mehdi Taremi", 19:"Karim Ansarifard", 20:"Team Photo"} },
+                { team: "USA", code: "USA", size: 20, names: {1:"USA Logo", 2:"Matt Turner", 3:"Zack Steffen", 4:"DeAndre Yedlin", 5:"Walker Zimmerman", 6:"Antonee Robinson", 7:"Sergiño Dest", 8:"Miles Robinson", 9:"Chris Richards", 10:"Tyler Adams", 11:"Weston McKennie", 12:"Yunus Musah", 13:"Brenden Aaronson", 14:"Kellyn Acosta", 15:"Gianluca Busio", 16:"Christian Pulisic", 17:"Timothy Weah", 18:"Ricardo Pepi", 19:"Giovanni Reyna", 20:"Team Photo"} },
+                { team: "Wales", code: "WAL", size: 20, names: {1:"Wales Logo", 2:"Wayne Hennessey", 3:"Danny Ward", 4:"Chris Gunter", 5:"Ben Davies", 6:"Connor Roberts", 7:"Chris Mepham", 8:"Joe Rodon", 9:"Neco Williams", 10:"Ethan Ampadu", 11:"Joe Allen", 12:"Aaron Ramsey", 13:"Harry Wilson", 14:"Joe Morrell", 15:"Gareth Bale", 16:"Daniel James", 17:"Kieffer Moore", 18:"Brennan Johnson", 19:"Ruben Colwill", 20:"Team Photo"} },
+                { team: "Argentina", code: "ARG", size: 20, names: {1:"Argentina Logo", 2:"Emiliano Martínez", 3:"Franco Armani", 4:"Nicolás Otamendi", 5:"Marcos Acuña", 6:"Nicolás Tagliafico", 7:"German Pezzella", 8:"Gonzalo Montiel", 9:"Cristian Romero", 10:"Nahuel Molina", 11:"Rodrigo De Paul", 12:"Leandro Paredes", 13:"Giovani Lo Celso", 14:"Guido Rodríguez", 15:"Alejandro Gómez", 16:"Lionel Messi", 17:"Lautaro Martínez", 18:"Ángel Di María", 19:"Joaquín Correa", 20:"Team Photo"} },
+                { team: "Saudi Arabia", code: "KSA", size: 20, names: {1:"Saudi Arabia Logo", 2:"Mohammed Al-Owais", 3:"Yasser Al-Shahrani", 4:"Omar Hawsawi", 5:"Mohammed Al-Breik", 6:"Ali Al-Bulaihi", 7:"Sultan Al-Ghannam", 8:"Abdulelah Al-Amri", 9:"Salman Al-Faraj", 10:"Salem Al-Dawsari", 11:"Nawaf Al-Abed", 12:"Abdullah Otayf", 13:"Hattan Bahebri", 14:"Mohamed Kanno", 15:"Abdulelah Al-Malki", 16:"Sami Al-Najei", 17:"Fahad Al-Muwallad", 18:"Firas Al-Buraikan", 19:"Saleh Al-Shehri", 20:"Team Photo"} },
+                { team: "Mexico", code: "MEX", size: 20, names: {1:"Mexico Logo", 2:"Guillermo Ochoa", 3:"Alfredo Talavera", 4:"Héctor Moreno", 5:"Jesús Gallardo", 6:"Néstor Araujo", 7:"César Montes", 8:"Jorge Sánchez", 9:"Luis Romo", 10:"Héctor Herrera", 11:"Andrés Guardado", 12:"Carlos Rodríguez", 13:"Edson Álvarez", 14:"Érick Gutiérrez", 15:"Diego Lainez", 16:"Raúl Jiménez", 17:"Jesús Corona", 18:"Hirving Lozano", 19:"Rogelio Funes Mori", 20:"Team Photo"} },
+                { team: "Poland", code: "POL", size: 20, names: {1:"Poland Logo", 2:"Wojciech Szczęsny", 3:"Łukasz Skorupski", 4:"Kamil Glik", 5:"Jan Bednarek", 6:"Bartosz Bereszyński", 7:"Tomasz Kędziora", 8:"Tymoteusz Puchacz", 9:"Grzegorz Krychowiak", 10:"Piotr Zieliński", 11:"Mateusz Klich", 12:"Karol Linetty", 13:"Przemysław Frankowski", 14:"Jakub Moder", 15:"Kamil Jóźwiak", 16:"Robert Lewandowski", 17:"Arkadiusz Milik", 18:"Krzysztof Piątek", 19:"Karol Świderski", 20:"Team Photo"} },
+                { team: "France", code: "FRA", size: 20, names: {1:"France Logo", 2:"Hugo Lloris", 3:"Mike Maignan", 4:"Raphaël Varane", 5:"Lucas Hernandez", 6:"Presnel Kimpembe", 7:"Benjamin Pavard", 8:"Lucas Digne", 9:"Jules Koundé", 10:"Theo Hernandez", 11:"N'Golo Kanté", 12:"Paul Pogba", 13:"Adrien Rabiot", 14:"Aurélien Tchouaméni", 15:"Antoine Griezmann", 16:"Kylian Mbappé", 17:"Karim Benzema", 18:"Olivier Giroud", 19:"Kingsley Coman", 20:"Team Photo"} },
+                { team: "Australia", code: "AUS", size: 20, names: {1:"Australia Logo", 2:"Mathew Ryan", 3:"Andrew Redmayne", 4:"Aziz Behich", 5:"Trent Sainsbury", 6:"Milos Degenek", 7:"Rhyan Grant", 8:"Harry Souttar", 9:"Fran Karačić", 10:"Aaron Mooy", 11:"Tom Rogic", 12:"Jackson Irvine", 13:"Ajdin Hrustic", 14:"James Jeggo", 15:"Mathew Leckie", 16:"Martin Boyle", 17:"Mitchell Duke", 18:"Adam Taggart", 19:"Awer Mabil", 20:"Team Photo"} },
+                { team: "Denmark", code: "DEN", size: 20, names: {1:"Denmark Logo", 2:"Kasper Schmeichel", 3:"Frederik Rønnow", 4:"Simon Kjær", 5:"Andreas Christensen", 6:"Jens Stryger Larsen", 7:"Joakim Mæhle", 8:"Jannik Vestergaard", 9:"Daniel Wass", 10:"Joachim Andersen", 11:"Christian Eriksen", 12:"Thomas Delaney", 13:"Pierre-Emile Højbjerg", 14:"Daniel Wass", 15:"Mathias Jensen", 16:"Yussuf Poulsen", 17:"Martin Braithwaite", 18:"Kasper Dolberg", 19:"Mikkel Damsgaard", 20:"Team Photo"} },
+                { team: "Tunisia", code: "TUN", size: 20, names: {1:"Tunisia Logo", 2:"Farouk Ben Mustapha", 3:"Bechir Ben Saïd", 4:"Ali Maâloul", 5:"Yassine Meriah", 6:"Dylan Bronn", 7:"Oussama Haddadi", 8:"Montassar Talbi", 9:"Mohamed Dräger", 10:"Wajdi Kechrida", 11:"Wahbi Khazri", 12:"Youssef Msakni", 13:"Ferjani Sassi", 14:"Ellyes Skhiri", 15:"Naïm Sliti", 16:"Saîf-Eddine Khaoui", 17:"Hannibal Mejbri", 18:"Seifeddine Jaziri", 19:"Youssef Msakni", 20:"Team Photo"} },
+                { team: "Spain", code: "ESP", size: 20, names: {1:"Spain Logo", 2:"Unai Simón", 3:"David de Gea", 4:"Jordi Alba", 5:"Aymeric Laporte", 6:"César Azpilicueta", 7:"Pau Torres", 8:"Eric García", 9:"Sergio Busquets", 10:"Koke", 11:"Pedri", 12:"Gavi", 13:"Rodri", 14:"Marcos Llorente", 15:"Ferran Torres", 16:"Álvaro Morata", 17:"Dani Olmo", 18:"Pablo Sarabia", 19:"Gerard Moreno", 20:"Team Photo"} },
+                { team: "Costa Rica", code: "CRC", size: 20, names: {1:"Costa Rica Logo", 2:"Keylor Navas", 3:"Leonel Moreira", 4:"Celso Borges", 5:"Bryan Ruiz", 6:"Joel Campbell", 7:"Kendall Waston", 8:"Francisco Calvo", 9:"Bryan Oviedo", 10:"Keysher Fuller", 11:"Yeltsin Tejeda", 12:"Jewison Bennette", 13:"Brandon Aguilera", 14:"Johan Venegas", 15:"Anthony Contreras", 16:"Gerson Torres", 17:"Carlos Martínez", 18:"Douglas López", 19:"Álvaro Zamora", 20:"Team Photo"} },
+                { team: "Germany", code: "GER", size: 20, names: {1:"Germany Logo", 2:"Manuel Neuer", 3:"Marc-André ter Stegen", 4:"Antonio Rüdiger", 5:"Niklas Süle", 6:"Matthias Ginter", 7:"Thilo Kehrer", 8:"David Raum", 9:"Joshua Kimmich", 10:"Leon Goretzka", 11:"İlkay Gündoğan", 12:"Thomas Müller", 13:"Marco Reus", 14:"Kai Havertz", 15:"Jonas Hofmann", 16:"Leroy Sané", 17:"Serge Gnabry", 18:"Timo Werner", 19:"Jamal Musiala", 20:"Team Photo"} },
+                { team: "Japan", code: "JPN", size: 20, names: {1:"Japan Logo", 2:"Shūichi Gonda", 3:"Eiji Kawashima", 4:"Yuto Nagatomo", 5:"Maya Yoshida", 6:"Hiroki Sakai", 7:"Shogo Taniguchi", 8:"Ko Itakura", 9:"Takehiro Tomiyasu", 10:"Yuta Nakayama", 11:"Wataru Endo", 12:"Gaku Shibasaki", 13:"Genki Haraguchi", 14:"Takumi Minamino", 15:"Junya Ito", 16:"Daichi Kamada", 17:"Takefusa Kubo", 18:"Yuya Osako", 19:"Takuma Asano", 20:"Team Photo"} },
+                { team: "Belgium", code: "BEL", size: 20, names: {1:"Belgium Logo", 2:"Thibaut Courtois", 3:"Simon Mignolet", 4:"Jan Vertonghen", 5:"Toby Alderweireld", 6:"Thomas Meunier", 7:"Jason Denayer", 8:"Dedryck Boyata", 9:"Timothy Castagne", 10:"Axel Witsel", 11:"Kevin De Bruyne", 12:"Yannick Carrasco", 13:"Youri Tielemans", 14:"Thorgan Hazard", 15:"Hans Vanaken", 16:"Eden Hazard", 17:"Romelu Lukaku", 18:"Dries Mertens", 19:"Michy Batshuayi", 20:"Team Photo"} },
+                { team: "Canada", code: "CAN", size: 20, names: {1:"Canada Logo", 2:"Milan Borjan", 3:"Maxime Crépeau", 4:"Samuel Adekugbe", 5:"Kamal Miller", 6:"Steven Vitória", 7:"Richie Laryea", 8:"Alistair Johnston", 9:"Jonathan Osorio", 10:"Atiba Hutchinson", 11:"Stephen Eustáquio", 12:"Mark-Anthony Kaye", 13:"Tajon Buchanan", 14:"Alphonso Davies", 15:"Jonathan David", 16:"Cyle Larin", 17:"Junior Hoilett", 18:"Lucas Cavallini", 19:"Liam Millar", 20:"Team Photo"} },
+                { team: "Morocco", code: "MAR", size: 20, names: {1:"Morocco Logo", 2:"Yassine Bounou", 3:"Munir Mohamedi", 4:"Romain Saïss", 5:"Achraf Hakimi", 6:"Nayef Aguerd", 7:"Adam Masina", 8:"Samir Mmaee", 9:"Sofyan Amrabat", 10:"Imrân Louza", 11:"Aymane Barkok", 12:"Selim Amallah", 13:"Ilias Chair", 14:"Sofiane Boufal", 15:"Youssef En-Nesyri", 16:"Ayoub El Kaabi", 17:"Ryan Mmaee", 18:"Munir El Haddadi", 19:"Tarik Tissoudali", 20:"Team Photo"} },
+                { team: "Croatia", code: "CRO", size: 20, names: {1:"Croatia Logo", 2:"Dominik Livaković", 3:"Simon Sluga", 4:"Domagoj Vida", 5:"Dejan Lovren", 6:"Šime Vrsaljko", 7:"Borna Barišić", 8:"Duje Ćaleta-Car", 9:"Josip Juranović", 10:"Joško Gvardiol", 11:"Luka Modrić", 12:"Ivan Perišić", 13:"Mateo Kovačić", 14:"Marcelo Brozović", 15:"Mario Pašalić", 16:"Nikola Vlašić", 17:"Andrej Kramarić", 18:"Josip Brekalo", 19:"Mislav Oršić", 20:"Team Photo"} },
+                { team: "Brazil", code: "BRA", size: 20, names: {1:"Brazil Logo", 2:"Alisson Becker", 3:"Ederson", 4:"Thiago Silva", 5:"Marquinhos", 6:"Danilo", 7:"Alex Sandro", 8:"Éder Militão", 9:"Casemiro", 10:"Fred", 11:"Lucas Paquetá", 12:"Fabinho", 13:"Philippe Coutinho", 14:"Neymar Jr", 15:"Vinícius Jr", 16:"Gabriel Jesus", 17:"Richarlison", 18:"Raphinha", 19:"Antony", 20:"Team Photo"} },
+                { team: "Serbia", code: "SRB", size: 20, names: {1:"Serbia Logo", 2:"Predrag Rajković", 3:"Vanja Milinković-Savić", 4:"Aleksandar Mitrović", 5:"Dušan Tadić", 6:"Sergej Milinković-Savić", 7:"Filip Kostić", 8:"Nemanja Gudelj", 9:"Nikola Milenković", 10:"Strahinja Pavlović", 11:"Miloš Veljković", 12:"Darko Lazović", 13:"Nemanja Radonjić", 14:"Saša Lukić", 15:"Andrija Živković", 16:"Dušan Vlahović", 17:"Luka Jović", 18:"Filip Đuričić", 19:"Ivan Ilić", 20:"Team Photo"} },
+                { team: "Switzerland", code: "SUI", size: 20, names: {1:"Switzerland Logo", 2:"Yann Sommer", 3:"Gregor Kobel", 4:"Ricardo Rodríguez", 5:"Fabian Schär", 6:"Manuel Akanji", 7:"Silvan Widmer", 8:"Elvedi Nico", 9:"Granit Xhaka", 10:"Xherdan Shaqiri", 11:"Remo Freuler", 12:"Denis Zakaria", 13:"Steven Zuber", 14:"Djibril Sow", 15:"Breel Embolo", 16:"Haris Seferović", 17:"Mario Gavranović", 18:"Ruben Vargas", 19:"Christian Fassnacht", 20:"Team Photo"} },
+                { team: "Cameroon", code: "CMR", size: 20, names: {1:"Cameroon Logo", 2:"André Onana", 3:"Devis Epassy", 4:"Michael Ngadeu-Ngadjui", 5:"Collins Fai", 6:"Nouhou Tolo", 7:"Jean-Charles Castelletto", 8:"Harold Moukoudi", 9:"Olivier Mbaizo", 10:"André-Frank Zambo Anguissa", 11:"Samuel Gouet", 12:"Martin Hongla", 13:"James Léa Siliki", 14:"Yvan Neyou", 15:"Vincent Aboubakar", 16:"Eric Maxim Choupo-Moting", 17:"Karl Toko Ekambi", 18:"Moumi Ngamaleu", 19:"Christian Bassogog", 20:"Team Photo"} },
+                { team: "Portugal", code: "POR", size: 20, names: {1:"Portugal Logo", 2:"Diogo Costa", 3:"Rui Patrício", 4:"Pepe", 5:"Rúben Dias", 6:"João Cancelo", 7:"Nuno Mendes", 8:"José Fonte", 9:"Raphaël Guerreiro", 10:"Danilo Pereira", 11:"Bruno Fernandes", 12:"Bernardo Silva", 13:"João Moutinho", 14:"Renato Sanches", 15:"Rúben Neves", 16:"William Carvalho", 17:"Cristiano Ronaldo", 18:"Diogo Jota", 19:"André Silva", 20:"Team Photo"} },
+                { team: "Ghana", code: "GHA", size: 20, names: {1:"Ghana Logo", 2:"Joseph Wollacott", 3:"Richard Ofori", 4:"Daniel Amartey", 5:"Baba Rahman", 6:"Alexander Djiku", 7:"Andy Yiadom", 8:"Gideon Mensah", 9:"Thomas Partey", 10:"André Ayew", 11:"Jordan Ayew", 12:"Mubarak Wakaso", 13:"Mohammed Kudus", 14:"Iddrisu Baba", 15:"Daniel-Kofi Kyereh", 16:"Abdul Fatawu Issahaku", 17:"Kamaldeen Sulemana", 18:"Felix Afena-Gyan", 19:"Christopher Antwi-Adjei", 20:"Team Photo"} },
+                { team: "Uruguay", code: "URU", size: 20, names: {1:"Uruguay Logo", 2:"Fernando Muslera", 3:"Sergio Rochet", 4:"Diego Godín", 5:"José María Giménez", 6:"Martín Cáceres", 7:"Sebastian Coates", 8:"Ronald Araújo", 9:"Matías Viña", 10:"Federico Valverde", 11:"Rodrigo Bentancur", 12:"Matías Vecino", 13:"Giorgian de Arrascaeta", 14:"Lucas Torreira", 15:"Nicolás de la Cruz", 16:"Luis Suárez", 17:"Edinson Cavani", 18:"Darwin Núñez", 19:"Facundo Pellistri", 20:"Team Photo"} },
+                { team: "South Korea", code: "KOR", size: 20, names: {1:"South Korea Logo", 2:"Kim Seung-gyu", 3:"Jo Hyeon-woo", 4:"Kim Young-gwon", 5:"Kim Min-jae", 6:"Kim Jin-su", 7:"Hong Chul", 8:"Kim Tae-hwan", 9:"Lee Yong", 10:"Jung Woo-young", 11:"Hwang In-beom", 12:"Lee Jae-sung", 13:"Kwon Chang-hoon", 14:"Hwang Hee-chan", 15:"Son Heung-min", 16:"Hwang Ui-jo", 17:"Cho Gue-sung", 18:"Song Min-kyu", 19:"Jeong Woo-yeong", 20:"Team Photo"} },
+                { team: "Museum Legends", code: "LEG", size: 18, names: {1:"Pelé", 2:"Diego Maradona", 3:"Zinedine Zidane", 4:"Ronaldo Nazário", 5:"Franz Beckenbauer", 6:"Johan Cruyff", 7:"Michel Platini", 8:"Miroslav Klose", 9:"Gerd Müller", 10:"Eusébio", 11:"Lev Yashin", 12:"Bobby Charlton", 13:"Romário", 14:"Paolo Maldini", 15:"Roberto Baggio", 16:"Cafu", 17:"Xavi Hernandez", 18:"Andrés Iniesta"} }
+            ];
+
+            // 1. Loop through structured main layout arrays
+            groups.forEach(group => {
+                for(let i = 1; i <= group.size; i++) {
+                    let itemName = group.names[i] || `Squad Member ${i}`;
+                    let isSpecial = (i === 1 || group.team === "Tournament Openers" || group.team === "Museum Legends" || i === 11 || i === 16);
+                    
+                    stickersData.push({
+                        "Code": `${group.code}${i}`,
+                        "Title": itemName,
+                        "Team": group.team,
+                        "Category": i === 1 ? "Logo/Badge" : (i === group.size && group.size === 20 ? "Team Lineup" : "Player"),
+                        "Rarity": isSpecial ? "Foil" : "Base"
+                    });
+                }
+            });
+
+            // 2. Padding block generates entries to hit the 977 item count safely
+            const placeholderPool = [
+                "Algeria", "Italy", "Sweden", "Chile", "Colombia", "Peru", "Egypt", "Nigeria", 
+                "Ivory Coast", "Turkey", "Ukraine", "Greece", "Austria", "Norway", "Czechia", "Romania"
+            ];
+            
+            let poolIndex = 0;
+            let subIndex = 1;
+
+            while(stickersData.length < 977) {
+                let currentPrefix = placeholderPool[poolIndex].substring(0,3).toUpperCase();
+                let isFoilItem = (subIndex === 1 || subIndex === 10);
+                
+                stickersData.push({
+                    "Code": `${currentPrefix}${subIndex}`,
+                    "Title": subIndex === 1 ? `${placeholderPool[poolIndex]} Shield` : `Pro Player ${subIndex} (${placeholderPool[poolIndex]})`,
+                    "Team": `${placeholderPool[poolIndex]} (Extended Pool)`,
+                    "Category": subIndex === 1 ? "Logo/Badge" : "Player",
+                    "Rarity": isFoilItem ? "Foil" : "Base"
+                });
+
+                subIndex++;
+                if(subIndex > 20) {
+                    subIndex = 1;
+                    poolIndex = (poolIndex + 1) % placeholderPool.length;
+                }
+            }
+        }
+
+        function populateTeamDropdown() {
+            const teams = [...new Set(stickersData.map(s => s.Team))];
+            teams.forEach(team => {
+                const option = document.createElement('option');
+                option.value = team;
+                option.textContent = team;
+                teamFilter.appendChild(option);
+            });
+        }
+
+        function getStats() {
+            const total = stickersData.length;
+            let collected = 0;
+            let dupes = 0;
+
+            stickersData.forEach(s => {
+                const count = stickerInventory[s.Code] || 0;
+                if(count > 0) {
+                    collected++;
+                    dupes += (count - 1);
+                }
+            });
+
+            const missing = total - collected;
+            const pct = Math.round((collected / total) * 100);
+
+            document.getElementById('statCollected').textContent = collected;
+            document.getElementById('statMissing').textContent = missing;
+            document.getElementById('statDuplicates').textContent = dupes;
+            document.getElementById('statPercent').textContent = pct + '%';
+            document.getElementById('progressBar').style.width = pct + '%';
+        }
+
+        function updateItemQuantity(code, delta) {
+            let count = stickerInventory[code] || 0;
+            count += delta;
+
+            if(count <= 0) {
+                delete stickerInventory[code];
+            } else {
+                stickerInventory[code] = count;
+            }
+
+            localStorage.setItem('sticker_inventory_v2', JSON.stringify(stickerInventory));
+            getStats();
+
+            if (activeView !== 'all') {
+                renderStickers();
+            } else {
+                const card = document.getElementById(`card-${code}`);
+                const badge = document.getElementById(`badge-${code}`);
+                const displayCount = document.getElementById(`qty-${code}`);
+                const currentCount = stickerInventory[code] || 0;
+
+                if(card) {
+                    displayCount.textContent = currentCount;
+                    if(currentCount > 0) {
+                        card.className = 'p-4 rounded-xl border border-emerald-200 bg-emerald-50/20 transition-all flex flex-col justify-between space-y-3 relative select-none';
+                        badge.className = 'absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs';
+                        badge.textContent = currentCount === 1 ? 'Owned' : `+${currentCount - 1} Dupe`;
+                    } else {
+                        card.className = 'p-4 rounded-xl border border-slate-200 hover:bg-slate-100/50 transition-all flex flex-col justify-between space-y-3 relative select-none';
+                        badge.className = 'hidden';
+                    }
+                }
+            }
+        }
+
+        function renderStickers() {
+            const searchVal = searchInput.value.toLowerCase().trim();
+            const selectedTeam = teamFilter.value;
+
+            stickersContainer.innerHTML = '';
+
+            const filtered = stickersData.filter(s => {
+                const matchSearch = s.Title.toLowerCase().includes(searchVal) || s.Code.toLowerCase().includes(searchVal) || s.Team.toLowerCase().includes(searchVal);
+                const matchTeam = selectedTeam === 'all' || s.Team === selectedTeam;
+                
+                const count = stickerInventory[s.Code] || 0;
+                let matchTab = true;
+                if(activeView === 'missing') matchTab = (count === 0);
+                if(activeView === 'collected') matchTab = (count > 0);
+                if(activeView === 'dupes') matchTab = (count > 1);
+
+                return matchSearch && matchTeam && matchTab;
+            });
+
+            if(filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            const teamGroups = {};
+            filtered.forEach(s => {
+                if(!teamGroups[s.Team]) teamGroups[s.Team] = [];
+                teamGroups[s.Team].push(s);
+            });
+
+            Object.keys(teamGroups).forEach(team => {
+                const section = document.createElement('div');
+                section.className = 'bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs';
+                
+                const groupItems = teamGroups[team];
+                const totalOwnedInGroup = groupItems.filter(s => (stickerInventory[s.Code] || 0) > 0).length;
+
+                section.innerHTML = `
+                    <div class="bg-slate-50 border-b border-slate-200 px-6 py-3.5 flex justify-between items-center">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-slate-900">${team}</span>
+                            <span class="bg-slate-200 text-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">${groupItems.length} items</span>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-500">Collected: ${totalOwnedInGroup} / ${groupItems.length}</span>
+                    </div>
+                `;
+
+                const grid = document.createElement('div');
+                grid.className = 'p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4';
+
+                groupItems.forEach(item => {
+                    const card = document.createElement('div');
+                    const qty = stickerInventory[item.Code] || 0;
+                    card.id = `card-${item.Code}`;
+                    
+                    card.className = `p-4 rounded-xl border transition-all flex flex-col justify-between space-y-3 relative select-none ${
+                        qty > 0 ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200 hover:bg-slate-100/50'
+                    }`;
+
+                    const rarityTheme = item.Rarity === 'Foil' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200';
+                    const badgeClass = qty === 0 ? 'hidden' : 'absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs';
+
+                    card.innerHTML = `
+                        <span id="badge-${item.Code}" class="${badgeClass}">${qty === 1 ? 'Owned' : `+${qty - 1} Dupe`}</span>
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-1.5">
+                                <span class="text-[11px] font-mono font-bold bg-slate-900 text-white px-1.5 py-0.5 rounded">${item.Code}</span>
+                                <span class="text-[10px] border px-1.5 py-0.5 rounded-full font-bold uppercase ${rarityTheme}">${item.Rarity}</span>
+                            </div>
+                            <h3 class="text-sm font-semibold text-slate-800 pt-1 text-truncate" title="${item.Title}">${item.Title}</h3>
+                            <p class="text-[11px] text-slate-400 font-medium">${item.Category}</p>
+                        </div>
+                        <div class="flex items-center justify-between border-t border-slate-100 pt-2.5">
+                            <span class="text-xs text-slate-400 font-medium">Quantity</span>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="event.stopPropagation(); updateItemQuantity('${item.Code}', -1)" class="w-7 h-7 flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 rounded-lg text-slate-700 font-bold transition-colors cursor-pointer">-</button>
+                                <span id="qty-${item.Code}" class="text-sm font-bold w-5 text-center text-slate-800">${qty}</span>
+                                <button onclick="event.stopPropagation(); updateItemQuantity('${item.Code}', 1)" class="w-7 h-7 flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 rounded-lg text-slate-700 font-bold transition-colors cursor-pointer">+</button>
+                            </div>
+                        </div>
+                    `;
+
+                    card.addEventListener('click', () => updateItemQuantity(item.Code, 1));
+                    grid.appendChild(card);
+                });
+
+                section.appendChild(grid);
+                stickersContainer.appendChild(section);
+            });
+        }
+
+        function selectTab(view, activeBtn, inactiveBtns) {
+            activeView = view;
+            activeBtn.className = "py-2 rounded-lg bg-white text-slate-900 shadow-xs cursor-pointer";
+            inactiveBtns.forEach(btn => btn.className = "py-2 rounded-lg text-slate-600 hover:text-slate-900 cursor-pointer");
+            renderStickers();
+        }
+
+        viewAll.addEventListener('click', () => selectTab('all', viewAll, [viewMissing, viewCollected, viewDuplicates]));
+        viewMissing.addEventListener('click', () => selectTab('missing', viewMissing, [viewAll, viewCollected, viewDuplicates]));
+        viewCollected.addEventListener('click', () => selectTab('collected', viewCollected, [viewAll, viewMissing, viewDuplicates]));
+        viewDuplicates.addEventListener('click', () => selectTab('dupes', viewDuplicates, [viewAll, viewMissing, viewCollected]));
+
+        searchInput.addEventListener('input', renderStickers);
+        teamFilter.addEventListener('change', renderStickers);
+
+        resetBtn.addEventListener('click', () => {
+            if(confirm('Are you sure you want to clear your entire checklist collection and duplicate progress?')) {
+                stickerInventory = {};
+                localStorage.removeItem('sticker_inventory_v2');
+                getStats();
+                renderStickers();
+            }
+        });
+
+        // Initialize execution sequence
+        compileDataset();
+        populateTeamDropdown();
+        getStats();
+        renderStickers();
+    </script>
+</body>
+</html>
